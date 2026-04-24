@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A vanilla e-commerce sandbox (no AI layer) designed as a realistic testbed for agentic use cases. Everything runs locally; no cloud services required.
 
-## Dev style
+## Guidelines
 
+- Use caveman plugin while working
 - Avoid defensive code !
 - Prioritize realism and business logic complexity over engineering best practices, performance optimizations, or edge cases.
 - Prioritize clear and understandable code over clever or "elegant" solutions. Verbose, straightforward implementations are preferred.
@@ -50,8 +51,8 @@ pnpm test --filter=<pkg>      # Single package
 pnpm e2e                      # Playwright
 
 # DB
-pnpm db:migrate               # Apply pending Drizzle migrations
-pnpm db:studio                # Drizzle Studio
+pnpm db:migrate               # alembic upgrade head
+pnpm db:shell                 # psql into Postgres (postgres:5433)
 
 # Images
 pnpm import:images ./path/    # Import user-supplied product images into MinIO
@@ -110,7 +111,7 @@ Postgres full-text search (`tsvector`) on product `name` + `description` + `cate
 
 ### Payment
 
-Default: internal mock (`packages/payment-mock`). Stripe test mode opt-in via `PAYMENT_PROVIDER=stripe` in `.env`.
+Default: internal mock (`apps/api/mocks/payment.py`). Stripe test mode opt-in via `PAYMENT_PROVIDER=stripe` in `.env`.
 
 ### Auth (`apps/api/auth/` — Python)
 
@@ -137,7 +138,7 @@ External agents subscribe via `POST /api/webhooks` and receive HMAC-signed JSON 
 - **Carrier**: mock generating label PDFs and simulating tracking state transitions.
 - **Email**: all transactional mail via Mailpit (SMTP).
 
-## Implementation phases (current status: not started)
+## Implementation phases (current status: Phase 0 ✅ complete)
 
 Critical path: **0 → 1 → 2 → 3 → 3b → (4 ∥ 5) → 6 → 8 → 9 → 10**
 
@@ -150,7 +151,7 @@ Critical path: **0 → 1 → 2 → 3 → 3b → (4 ∥ 5) → 6 → 8 → 9 → 
 | 3b | Event bus: `domain_event` table, SSE stream, outbound webhooks — primary agentic hook |
 | 4 | Storefront: catalogue, PLP/PDP, Postgres FTS search, cart, checkout, account |
 | 5 | Back-office: all 12 modules (PIM, OMS, CRM, Support, …) — ~30-40% of total effort |
-| 6 | External mocks: payment mock (default), carrier, MailHog, MinIO + image import script |
+| 6 | External mocks: payment mock (default), carrier, Mailpit, MinIO + image import script |
 | 7 | PDF generation (invoices, credit notes), MJML email templates |
 | 8 | Realistic seed:full script |
 | 9 | DuckDB DWH + Python ETL scripts |
