@@ -11,7 +11,7 @@ docker compose up
 
 - Storefront → http://localhost:3000
 - Back-office → http://localhost:3001
-- MailHog UI → http://localhost:8025
+- Mailpit UI → http://localhost:8025
 - MinIO console → http://localhost:9001
 
 Reset: `docker compose down -v && docker compose up`

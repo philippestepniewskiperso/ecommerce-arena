@@ -63,7 +63,7 @@ pnpm import:images ./path/    # Import user-supplied product images into MinIO
 |---|---|
 | Storefront | localhost:3000 |
 | Back-office | localhost:3001 |
-| MailHog UI | localhost:8025 |
+| Mailpit UI | localhost:8025 |
 | MinIO console | localhost:9001 |
 
 ## Demo staff accounts (created by seed:dev)
@@ -135,7 +135,7 @@ External agents subscribe via `POST /api/webhooks` and receive HMAC-signed JSON 
 
 - **Payment**: internal mock by default, Stripe test mode opt-in.
 - **Carrier**: mock generating label PDFs and simulating tracking state transitions.
-- **Email**: all transactional mail via MailHog (SMTP).
+- **Email**: all transactional mail via Mailpit (SMTP).
 
 ## Implementation phases (current status: not started)
 
