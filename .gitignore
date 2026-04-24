@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+__pycache__/
+*.pyc
+.venv/
+
+# Build
+.next/
+.turbo/
+dist/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# MinIO data
+minio-data/
+
+# Postgres data
+pgdata/
+
+# Test
+coverage/
+.nyc_output/
+playwright-report/
+test-results/

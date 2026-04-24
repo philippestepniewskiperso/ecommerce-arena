@@ -1,0 +1,24 @@
+{
+  "name": "ecommerce-sandbox",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "e2e": "turbo e2e",
+    "setup": "node scripts/setup.mjs",
+    "seed:dev": "uv run python scripts/seed/seed_dev.py",
+    "seed:full": "uv run python scripts/seed/seed_full.py",
+    "reset": "uv run python scripts/seed/reset.py",
+    "db:migrate": "uv run alembic upgrade head",
+    "db:studio": "drizzle-kit studio",
+    "import:images": "node scripts/import-images.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  }
+}
