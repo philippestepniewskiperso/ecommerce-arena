@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -16,37 +16,46 @@ html {
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #ffffff;
-  color: #1f2937;
+  background: #fafafa;
+  color: #1a1a1a;
   line-height: 1.6;
 }
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200;
+    @apply px-6 py-3 bg-black hover:bg-gray-900 text-white font-semibold rounded-sm transition-colors duration-200;
   }
 
   .btn-secondary {
-    @apply px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors duration-200;
+    @apply px-6 py-3 bg-white border-2 border-black text-black hover:bg-black hover:text-white font-semibold rounded-sm transition-all duration-200;
   }
 
   .card {
-    @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300;
+    @apply bg-white border border-gray-200 rounded-sm shadow-sm hover:shadow-lg transition-shadow duration-300;
   }
 
   .product-card {
-    @apply card cursor-pointer;
+    @apply card overflow-hidden cursor-pointer;
   }
 
   .product-image {
-    @apply w-full h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-t-xl;
+    @apply w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden;
   }
 
   .section-title {
-    @apply text-3xl font-bold text-gray-900 mb-8;
+    @apply text-4xl font-bold text-black mb-12 font-display tracking-tight;
   }
 
   .section {
-    @apply py-16;
+    @apply py-20;
   }
+}
+
+/* Hover effects */
+.product-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
 }

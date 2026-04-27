@@ -12,40 +12,40 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 py-20 border-b border-gray-200">
+      <div className="bg-black text-white py-32 border-b-8 border-gray-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-4">
-            ecommerce-arena
+          <h1 className="text-6xl sm:text-7xl font-bold mb-6 font-display tracking-tight">
+            KICKS
           </h1>
-          <p className="text-lg text-gray-700 max-w-2xl mb-8">
-            Production-grade e-commerce sandbox for agent testing
+          <p className="text-xl text-gray-300 max-w-2xl mb-10 font-light">
+            Premium footwear collection. From streetwear to performance.
           </p>
           <div className="flex gap-4">
-            <button className="btn-primary">
-              Explore Now
+            <button className="px-8 py-3 bg-white text-black font-bold hover:bg-gray-200 transition-colors rounded-sm">
+              Shop Now
             </button>
-            <button className="btn-secondary">
-              Learn More
+            <button className="px-8 py-3 bg-transparent border-2 border-white text-white hover:bg-white hover:text-black font-bold transition-all rounded-sm">
+              Explore
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         {/* Categories */}
         {categories.length > 0 && (
-          <section className="section mb-20">
-            <h2 className="section-title">Shop by Category</h2>
+          <section className="section mb-24">
+            <h2 className="section-title">Collections</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
-                  className="card p-6 text-center hover:border-blue-400 transition-all group"
+                  className="card p-8 text-center group hover:border-black transition-all"
                 >
-                  <div className="text-3xl mb-3">📦</div>
-                  <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <div className="mb-4 text-5xl">👟</div>
+                  <p className="font-bold text-lg text-black group-hover:underline transition-all">
                     {cat.name}
                   </p>
                   {cat.description && (
@@ -59,20 +59,20 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Products */}
+        {/* New Arrivals */}
         <section className="section">
-          <h2 className="section-title">Featured Products</h2>
+          <h2 className="section-title">New Arrivals</h2>
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
                 <Link
                   key={product.id}
                   href={`/products/${product.slug}`}
-                  className="product-card group"
+                  className="product-card"
                 >
-                  <div className="product-image">
+                  <div className="product-image bg-gradient-to-br from-gray-100 to-gray-200">
                     <svg
-                      className="w-12 h-12 text-gray-400"
+                      className="w-20 h-20 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -85,18 +85,18 @@ export default async function Home() {
                       />
                     </svg>
                   </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
+                  <div className="p-5">
+                    <h3 className="font-bold text-base text-black mb-1 line-clamp-2">
                       {product.name}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                       {product.short_description}
                     </p>
                     <div className="flex items-end justify-between">
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-xl font-bold text-black">
                         €{product.base_price.toFixed(2)}
                       </p>
-                      <span className="text-blue-600 group-hover:translate-x-1 transition-transform">
+                      <span className="text-black transition-transform group-hover:translate-x-1">
                         →
                       </span>
                     </div>
