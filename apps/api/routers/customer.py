@@ -13,6 +13,7 @@ from apps.api.auth import (
     hash_password, verify_password, create_session, generate_secret,
     get_totp_uri, verify_totp, require_customer
 )
+from apps.api.events import emit_event, EventType
 
 router = APIRouter(prefix="/api/customer", tags=["customer"])
 
@@ -38,6 +39,16 @@ async def signup(payload: CustomerCreate, db: AsyncSession = Depends(get_db)):
 
     # Create session
     token, session = await create_session(db, "customer", customer.id, ttl_hours=720)
+
+    # Emit event
+    await emit_event(
+        db,
+        EventType.CUSTOMER_SIGNUP,
+        "customer",
+        customer.id,
+        {"email": customer.email, "first_name": customer.first_name, "last_name": customer.last_name},
+    )
+
     await db.commit()
 
     return {"token": token, "expires_at": session.expires_at}
@@ -145,5 +156,14 @@ async def post_review(
     )
     db.add(review)
     await db.flush()
+
+    await emit_event(
+        db,
+        "review.created",
+        "review",
+        review.id,
+        {"product_id": str(payload.product_id), "rating": payload.rating, "customer_id": str(customer.id)},
+    )
+
     await db.commit()
     return review

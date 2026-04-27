@@ -15,6 +15,7 @@ from apps.api.schemas import (
     BannerResponse, RoleResponse, PermissionResponse, ApiKeyResponse, ApiKeyCreateResponse
 )
 from apps.api.auth import require_staff, generate_api_key, hash_api_key
+from apps.api.events import emit_event, EventType
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -153,8 +154,25 @@ async def update_order_status(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-    order.status = payload.get("status")
+    new_status = payload.get("status")
+    order.status = new_status
     await db.flush()
+
+    # Emit event based on new status
+    event_map = {
+        "shipped": EventType.ORDER_SHIPPED,
+        "delivered": EventType.ORDER_DELIVERED,
+        "cancelled": EventType.ORDER_CANCELLED,
+    }
+    if new_status in event_map:
+        await emit_event(
+            db,
+            event_map[new_status],
+            "order",
+            order.id,
+            {"order_number": order.number, "status": new_status},
+        )
+
     await db.commit()
     return {"message": "Order updated"}
 
