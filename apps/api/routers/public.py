@@ -44,7 +44,7 @@ async def list_products(
     return result.scalars().all()
 
 
-@router.get("/products/search", response_model=list[ProductSearchResponse])
+@router.get("/products/search", response_model=list[dict])
 async def search_products(
     q: str = Query(..., min_length=2),
     skip: int = Query(0, ge=0),
@@ -52,22 +52,20 @@ async def search_products(
     db: AsyncSession = Depends(get_db),
 ):
     """Full-text search products by name/description."""
-    # Postgres FTS using to_tsvector
+    # Simple substring search for now (FTS to be optimized)
+    search_term = f"%{q.lower()}%"
     result = await db.execute(
         select(Product)
         .where(Product.status == "active")
         .where(
-            func.to_tsvector("simple", func.coalesce(Product.name, "")).match(
-                func.plainto_tsquery("simple", q)
-            )
-            | func.to_tsvector("simple", func.coalesce(Product.description, "")).match(
-                func.plainto_tsquery("simple", q)
-            )
+            (func.lower(Product.name).like(search_term))
+            | (func.lower(Product.description).like(search_term))
         )
         .offset(skip)
         .limit(limit)
     )
-    return result.scalars().all()
+    products = result.scalars().all()
+    return [{"id": str(p.id), "name": p.name, "slug": p.slug, "base_price": float(p.base_price)} for p in products]
 
 
 @router.get("/products/{slug}", response_model=ProductResponse)

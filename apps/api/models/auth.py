@@ -46,7 +46,7 @@ class StaffUser(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     invited_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("staff_users.id"), nullable=True)
 
-    roles: Mapped[list["StaffUserRole"]] = relationship("StaffUserRole", back_populates="staff_user", cascade="all, delete-orphan")
+    roles: Mapped[list["StaffUserRole"]] = relationship("StaffUserRole", back_populates="staff_user", foreign_keys="StaffUserRole.staff_user_id", cascade="all, delete-orphan")
     assigned_tickets: Mapped[list["SupportTicket"]] = relationship("SupportTicket", back_populates="assigned_to", foreign_keys="SupportTicket.assigned_to_id")
     campaigns: Mapped[list["Campaign"]] = relationship("Campaign", back_populates="created_by")
 
