@@ -27,7 +27,7 @@ async def get_category(slug: str, db: AsyncSession = Depends(get_db)):
     return category
 
 
-@router.get("/products", response_model=list[ProductSearchResponse])
+@router.get("/products", response_model=list[dict])
 async def list_products(
     category_id: str | None = None,
     status: str = "active",
@@ -41,7 +41,8 @@ async def list_products(
         query = query.where(Product.category_id == category_id)
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    products = result.scalars().all()
+    return [{"id": str(p.id), "name": p.name, "slug": p.slug, "base_price": float(p.base_price), "short_description": p.short_description} for p in products]
 
 
 @router.get("/products/search", response_model=list[dict])
