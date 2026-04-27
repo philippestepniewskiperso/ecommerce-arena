@@ -35,7 +35,7 @@ body {
   }
 
   .product-card {
-    @apply card group cursor-pointer;
+    @apply card cursor-pointer;
   }
 
   .product-image {
