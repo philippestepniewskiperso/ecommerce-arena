@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -13,31 +15,31 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
-  background: #f9fafb;
-  color: #111827;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #ffffff;
+  color: #1f2937;
   line-height: 1.6;
 }
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors;
+    @apply px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-gray-200 text-gray-900 font-semibold rounded-lg hover:bg-gray-300 transition-colors;
+    @apply px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors duration-200;
   }
 
   .card {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300;
   }
 
   .product-card {
-    @apply card overflow-hidden;
+    @apply card group cursor-pointer;
   }
 
   .product-image {
-    @apply w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center;
+    @apply w-full h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-t-xl;
   }
 
   .section-title {
@@ -45,6 +47,6 @@ body {
   }
 
   .section {
-    @apply py-12;
+    @apply py-16;
   }
 }
