@@ -632,3 +632,44 @@ class PaginatedResponse(BaseModel):
     total: int
     skip: int
     limit: int
+
+
+# ============================================================================
+# CHECKOUT
+# ============================================================================
+
+class CheckoutItem(BaseModel):
+    product_id: uuid.UUID
+    name_snapshot: str
+    sku_snapshot: str
+    unit_price: Decimal
+    quantity: int
+
+
+class CheckoutAddress(BaseModel):
+    first_name: str
+    last_name: str
+    line1: str
+    line2: Optional[str] = None
+    city: str
+    state: Optional[str] = None
+    postal_code: str
+    country_code: str = "FR"
+    phone: Optional[str] = None
+
+
+class CheckoutCreate(BaseModel):
+    items: list[CheckoutItem]
+    shipping_address: CheckoutAddress
+    card_token: str = "tok_test"
+    notes: Optional[str] = None
+
+
+class CheckoutResponse(BaseModel):
+    order_number: str
+    order_id: uuid.UUID
+    total: Decimal
+    currency: str
+    payment_status: str
+    payment_transaction_id: Optional[str] = None
+    error: Optional[str] = None

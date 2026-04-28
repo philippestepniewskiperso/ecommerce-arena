@@ -69,7 +69,7 @@ async def search_products(
     return [{"id": str(p.id), "name": p.name, "slug": p.slug, "base_price": float(p.base_price)} for p in products]
 
 
-@router.get("/products/{slug}", response_model=ProductResponse)
+@router.get("/products/{slug}", response_model=dict)
 async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
     """Get product details by slug."""
     result = await db.execute(
@@ -78,7 +78,22 @@ async def get_product(slug: str, db: AsyncSession = Depends(get_db)):
     product = result.scalars().first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    return product
+    return {
+        "id": str(product.id),
+        "name": product.name,
+        "slug": product.slug,
+        "base_price": float(product.base_price),
+        "compare_price": float(product.compare_price) if product.compare_price else None,
+        "short_description": product.short_description,
+        "description": product.description,
+        "category_id": str(product.category_id) if product.category_id else None,
+        "status": product.status,
+        "tags": product.tags or [],
+        "variants": [],
+        "images": [],
+        "created_at": product.created_at.isoformat() if product.created_at else None,
+        "updated_at": product.updated_at.isoformat() if product.updated_at else None,
+    }
 
 
 @router.get("/products/{product_id}/reviews", response_model=list[ReviewResponse])

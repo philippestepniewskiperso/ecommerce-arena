@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import { CartProvider } from "@/lib/cart";
 
 export const metadata: Metadata = {
-  title: "ecommerce-arena - Storefront",
-  description: "Production-grade e-commerce sandbox for agent testing",
+  title: "KICKS – Premium Footwear",
+  description: "Premium shoe retail sandbox for agent testing",
 };
 
 export default function RootLayout({
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        {children}
+        <CartProvider>
+          <Header />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

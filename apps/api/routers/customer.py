@@ -1,18 +1,24 @@
 """Customer endpoints: auth, orders, account, reviews."""
+import uuid
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from apps.api.dependencies import get_db
-from apps.api.models import Customer, Order, Review
+from apps.api.models import Customer, Order, OrderItem, Payment, Review
+from apps.api.models.customer import Address
 from apps.api.schemas import (
     CustomerCreate, CustomerLogin, CustomerResponse, SessionResponse,
-    CustomerTOTPSetup, CustomerVerifyTOTP, OrderResponse, ReviewCreate, ReviewResponse
+    CustomerTOTPSetup, CustomerVerifyTOTP, OrderResponse, ReviewCreate, ReviewResponse,
+    CheckoutCreate, CheckoutResponse,
 )
 from apps.api.auth import (
     hash_password, verify_password, create_session, generate_secret,
     get_totp_uri, verify_totp, require_customer
 )
+from apps.api.mocks.payment import charge
 from apps.api.events import emit_event, EventType
 
 router = APIRouter(prefix="/api/customer", tags=["customer"])
@@ -167,3 +173,113 @@ async def post_review(
 
     await db.commit()
     return review
+
+
+@router.post("/checkout", response_model=CheckoutResponse)
+async def checkout(
+    payload: CheckoutCreate,
+    customer: Customer = Depends(require_customer),
+    db: AsyncSession = Depends(get_db),
+):
+    """Place an order: create address, order, run payment mock, emit event."""
+    # Generate order number: ORD-YYYY-NNNNN
+    result = await db.execute(func.count(Order.id))
+    count = result.scalar() or 0
+    year = datetime.now(timezone.utc).year
+    order_number = f"ORD-{year}-{(count + 1):05d}"
+
+    # Compute totals
+    subtotal = sum(float(item.unit_price) * item.quantity for item in payload.items)
+    shipping = 5.99 if subtotal < 100 else 0.0
+    tax = round(subtotal * 0.20, 2)
+    total = round(subtotal + shipping + tax, 2)
+
+    # Create shipping address
+    addr_data = payload.shipping_address
+    address = Address(
+        customer_id=customer.id,
+        type="shipping",
+        first_name=addr_data.first_name,
+        last_name=addr_data.last_name,
+        line1=addr_data.line1,
+        line2=addr_data.line2,
+        city=addr_data.city,
+        state=addr_data.state,
+        postal_code=addr_data.postal_code,
+        country_code=addr_data.country_code,
+        phone=addr_data.phone,
+    )
+    db.add(address)
+    await db.flush()
+
+    # Create order
+    order = Order(
+        number=order_number,
+        customer_id=customer.id,
+        shipping_address_id=address.id,
+        status="pending",
+        subtotal=subtotal,
+        shipping_amount=shipping,
+        tax_amount=tax,
+        total=total,
+        currency="EUR",
+        notes=payload.notes,
+    )
+    db.add(order)
+    await db.flush()
+
+    # Create order items
+    for item in payload.items:
+        db.add(OrderItem(
+            order_id=order.id,
+            product_id=item.product_id,
+            sku_snapshot=item.sku_snapshot,
+            name_snapshot=item.name_snapshot,
+            unit_price=float(item.unit_price),
+            quantity=item.quantity,
+            total_price=float(item.unit_price) * item.quantity,
+        ))
+
+    # Run payment mock
+    payment_result = charge(total, "EUR", payload.card_token)
+
+    payment = Payment(
+        order_id=order.id,
+        provider="mock",
+        provider_ref=payment_result["transaction_id"],
+        status="succeeded" if payment_result["success"] else "failed",
+        amount=total,
+        currency="EUR",
+        method="card",
+        payment_metadata=payment_result,
+    )
+    db.add(payment)
+
+    if payment_result["success"]:
+        order.status = "confirmed"
+        await emit_event(
+            db,
+            EventType.ORDER_PLACED,
+            "order",
+            order.id,
+            {
+                "order_number": order_number,
+                "customer_id": str(customer.id),
+                "total": total,
+                "items": len(payload.items),
+            },
+        )
+    else:
+        order.status = "payment_failed"
+
+    await db.commit()
+
+    return CheckoutResponse(
+        order_number=order_number,
+        order_id=order.id,
+        total=total,
+        currency="EUR",
+        payment_status=payment.status,
+        payment_transaction_id=payment_result["transaction_id"],
+        error=payment_result.get("error_message"),
+    )
