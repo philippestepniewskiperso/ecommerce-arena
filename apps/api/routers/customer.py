@@ -107,7 +107,7 @@ async def get_profile(customer: Customer = Depends(require_customer)):
     return customer
 
 
-@router.get("/orders", response_model=list[OrderResponse])
+@router.get("/orders")
 async def list_customer_orders(
     customer: Customer = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
@@ -116,7 +116,21 @@ async def list_customer_orders(
     result = await db.execute(
         select(Order).where(Order.customer_id == customer.id).order_by(Order.placed_at.desc())
     )
-    return result.scalars().all()
+    orders = result.scalars().all()
+    return [
+        {
+            "id": str(o.id),
+            "number": o.number,
+            "status": o.status,
+            "subtotal": float(o.subtotal),
+            "shipping_amount": float(o.shipping_amount),
+            "tax_amount": float(o.tax_amount),
+            "total": float(o.total),
+            "currency": o.currency,
+            "placed_at": o.placed_at.isoformat() if o.placed_at else None,
+        }
+        for o in orders
+    ]
 
 
 @router.get("/orders/{order_number}", response_model=OrderResponse)
