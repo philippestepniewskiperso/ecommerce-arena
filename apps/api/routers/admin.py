@@ -1,23 +1,99 @@
 """Admin endpoints: CRUD operations for all resources with RBAC."""
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from apps.api.dependencies import get_db
 from apps.api.models import (
     Product, Category, StaffUser, Order, Payment, Shipment,
-    SupportTicket, Campaign, Page, Banner, Role, Permission, ApiKey
+    SupportTicket, Campaign, Page, Banner, Role, Permission, ApiKey,
+    Customer,
 )
 from apps.api.schemas import (
     ProductResponse, ProductCreate, ProductUpdate, CategoryResponse,
     OrderResponse, PaymentResponse, ShipmentResponse, SupportTicketResponse,
     CampaignResponse, CampaignCreate, PageResponse, PageCreate,
-    BannerResponse, RoleResponse, PermissionResponse, ApiKeyResponse, ApiKeyCreateResponse
+    BannerResponse, RoleResponse, PermissionResponse, ApiKeyResponse, ApiKeyCreateResponse,
+    SessionResponse,
 )
 from apps.api.auth import require_staff, generate_api_key, hash_api_key
+from apps.api.auth.password import verify_password
+from apps.api.auth.session import create_session
 from apps.api.events import emit_event, EventType
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+# ============================================================================
+# AUTH
+# ============================================================================
+
+class StaffLogin(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/auth/login", response_model=SessionResponse)
+async def staff_login(payload: StaffLogin, db: AsyncSession = Depends(get_db)):
+    """Staff login — returns session token."""
+    result = await db.execute(select(StaffUser).where(StaffUser.email == payload.email))
+    staff = result.scalars().first()
+    if not staff or not verify_password(payload.password, staff.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    if staff.status != "active":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account inactive")
+
+    token, session = await create_session(db, "staff", staff.id, ttl_hours=8)
+    await db.commit()
+    return {"token": token, "expires_at": session.expires_at}
+
+
+@router.get("/auth/me")
+async def staff_me(staff: StaffUser = Depends(require_staff)):
+    """Return current staff user info."""
+    return {
+        "id": str(staff.id),
+        "email": staff.email,
+        "first_name": staff.first_name,
+        "last_name": staff.last_name,
+        "status": staff.status,
+    }
+
+
+# ============================================================================
+# DASHBOARD
+# ============================================================================
+
+@router.get("/dashboard")
+async def dashboard(staff: StaffUser = Depends(require_staff), db: AsyncSession = Depends(get_db)):
+    """KPI tiles for the dashboard."""
+    total_orders = (await db.execute(select(func.count()).select_from(Order))).scalar()
+    revenue = (await db.execute(
+        select(func.sum(Order.total)).where(Order.status.in_(["delivered", "shipped", "confirmed"]))
+    )).scalar() or 0
+    open_tickets = (await db.execute(
+        select(func.count()).select_from(SupportTicket).where(SupportTicket.status.in_(["open", "in_progress"]))
+    )).scalar()
+    total_customers = (await db.execute(select(func.count()).select_from(Customer))).scalar()
+    pending_orders = (await db.execute(
+        select(func.count()).select_from(Order).where(Order.status == "pending")
+    )).scalar()
+    urgent_tickets = (await db.execute(
+        select(func.count()).select_from(SupportTicket).where(
+            SupportTicket.priority == "urgent",
+            SupportTicket.status.in_(["open", "in_progress"]),
+        )
+    )).scalar()
+
+    return {
+        "total_orders": total_orders,
+        "revenue": float(revenue),
+        "open_tickets": open_tickets,
+        "total_customers": total_customers,
+        "pending_orders": pending_orders,
+        "urgent_tickets": urgent_tickets,
+    }
 
 
 # ============================================================================
@@ -318,3 +394,32 @@ async def list_permissions(
     """List all permissions (staff only)."""
     result = await db.execute(select(Permission))
     return result.scalars().all()
+
+
+# ============================================================================
+# CUSTOMERS
+# ============================================================================
+
+@router.get("/customers")
+async def list_customers(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    staff: StaffUser = Depends(require_staff),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all customers (staff only)."""
+    result = await db.execute(
+        select(Customer).order_by(Customer.created_at.desc()).offset(skip).limit(limit)
+    )
+    customers = result.scalars().all()
+    return [
+        {
+            "id": str(c.id),
+            "email": c.email,
+            "first_name": c.first_name,
+            "last_name": c.last_name,
+            "status": c.status,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        }
+        for c in customers
+    ]

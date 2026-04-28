@@ -1,19 +1,21 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
+import { AuthProvider } from '@/lib/auth';
+import Shell from '@/components/Shell';
 
 export const metadata: Metadata = {
-  title: "Back Office — E-Commerce Sandbox",
-  description: "Staff back-office",
+  title: 'KICKS Back Office',
+  description: 'Staff dashboard',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <Shell>{children}</Shell>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
