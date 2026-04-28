@@ -150,26 +150,26 @@ export default function CheckoutPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">First name</label>
-                    <input value={form.first_name} onChange={update('first_name')} placeholder="Jean"
+                    <label htmlFor="first_name" className="block text-sm font-medium text-black mb-1">First name</label>
+                    <input id="first_name" value={form.first_name} onChange={update('first_name')} placeholder="Jean"
                       className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Last name</label>
-                    <input value={form.last_name} onChange={update('last_name')} placeholder="Dupont"
+                    <label htmlFor="last_name" className="block text-sm font-medium text-black mb-1">Last name</label>
+                    <input id="last_name" value={form.last_name} onChange={update('last_name')} placeholder="Dupont"
                       className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Email *</label>
-                  <input type="email" required value={form.email} onChange={update('email')} placeholder="jean@example.com"
+                  <label htmlFor="email" className="block text-sm font-medium text-black mb-1">Email *</label>
+                  <input id="email" type="email" required value={form.email} onChange={update('email')} placeholder="jean@example.com"
                     className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Password *</label>
-                  <input type="password" required value={form.password} onChange={update('password')} placeholder="••••••••"
+                  <label htmlFor="password" className="block text-sm font-medium text-black mb-1">Password *</label>
+                  <input id="password" type="password" required value={form.password} onChange={update('password')} placeholder="••••••••"
                     className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                 </div>
 
@@ -184,20 +184,20 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-bold text-black mb-4">Shipping address</h2>
 
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Street address *</label>
-                  <input required value={form.line1} onChange={update('line1')} placeholder="123 rue de la Paix"
+                  <label htmlFor="line1" className="block text-sm font-medium text-black mb-1">Street address *</label>
+                  <input id="line1" required value={form.line1} onChange={update('line1')} placeholder="123 rue de la Paix"
                     className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">City *</label>
-                    <input required value={form.city} onChange={update('city')} placeholder="Paris"
+                    <label htmlFor="city" className="block text-sm font-medium text-black mb-1">City *</label>
+                    <input id="city" required value={form.city} onChange={update('city')} placeholder="Paris"
                       className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Postal code *</label>
-                    <input required value={form.postal_code} onChange={update('postal_code')} placeholder="75001"
+                    <label htmlFor="postal_code" className="block text-sm font-medium text-black mb-1">Postal code *</label>
+                    <input id="postal_code" required value={form.postal_code} onChange={update('postal_code')} placeholder="75001"
                       className="w-full border border-gray-900 rounded-sm px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                 </div>

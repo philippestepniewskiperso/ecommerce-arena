@@ -25,17 +25,20 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('kicks_cart');
       if (saved) setItems(JSON.parse(saved));
     } catch {}
+    setInitialized(true);
   }, []);
 
   useEffect(() => {
+    if (!initialized) return;
     localStorage.setItem('kicks_cart', JSON.stringify(items));
-  }, [items]);
+  }, [items, initialized]);
 
   function addItem(newItem: Omit<CartItem, 'quantity'>) {
     setItems(prev => {
