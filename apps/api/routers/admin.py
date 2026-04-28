@@ -20,7 +20,11 @@ from apps.api.auth import require_staff, generate_api_key, hash_api_key
 from apps.api.auth.password import verify_password
 from apps.api.auth.session import create_session
 from apps.api.events import emit_event, EventType
+from apps.api.models import TrackingEvent
+from apps.api.mocks.carrier import create_label, advance_tracking, CARRIERS
 from pydantic import BaseModel
+import random
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -186,7 +190,7 @@ async def create_category(
 # ORDERS
 # ============================================================================
 
-@router.get("/orders", response_model=list[OrderResponse])
+@router.get("/orders")
 async def list_orders(
     status: str | None = None,
     skip: int = Query(0, ge=0),
@@ -200,10 +204,25 @@ async def list_orders(
         query = query.where(Order.status == status)
     query = query.order_by(Order.placed_at.desc()).offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    orders = result.scalars().all()
+    return [
+        {
+            "id": str(o.id),
+            "number": o.number,
+            "customer_id": str(o.customer_id),
+            "status": o.status,
+            "subtotal": float(o.subtotal),
+            "shipping_amount": float(o.shipping_amount),
+            "tax_amount": float(o.tax_amount),
+            "total": float(o.total),
+            "currency": o.currency,
+            "placed_at": o.placed_at.isoformat() if o.placed_at else None,
+        }
+        for o in orders
+    ]
 
 
-@router.get("/orders/{order_id}", response_model=OrderResponse)
+@router.get("/orders/{order_id}")
 async def get_order_admin(
     order_id: str,
     staff: StaffUser = Depends(require_staff),
@@ -214,7 +233,18 @@ async def get_order_admin(
     order = result.scalars().first()
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    return order
+    return {
+        "id": str(order.id),
+        "number": order.number,
+        "customer_id": str(order.customer_id),
+        "status": order.status,
+        "subtotal": float(order.subtotal),
+        "shipping_amount": float(order.shipping_amount),
+        "tax_amount": float(order.tax_amount),
+        "total": float(order.total),
+        "currency": order.currency,
+        "placed_at": order.placed_at.isoformat() if order.placed_at else None,
+    }
 
 
 @router.patch("/orders/{order_id}/status")
@@ -251,6 +281,124 @@ async def update_order_status(
 
     await db.commit()
     return {"message": "Order updated"}
+
+
+@router.post("/orders/{order_id}/ship")
+async def ship_order(
+    order_id: str,
+    payload: dict = {},
+    staff: StaffUser = Depends(require_staff),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create shipment + label, mark order shipped, emit order.shipped event."""
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    if order.status not in ("pending", "confirmed"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot ship order with status '{order.status}'")
+
+    carrier = payload.get("carrier", random.choice(CARRIERS))
+    label = create_label(order.number, carrier)
+
+    shipment = Shipment(
+        order_id=order.id,
+        carrier=carrier,
+        tracking_number=label["tracking_number"],
+        status="picked_up",
+        label_url=label["label_url"],
+        estimated_delivery=label["estimated_delivery"],
+        shipped_at=datetime.now(timezone.utc),
+    )
+    db.add(shipment)
+    await db.flush()
+
+    db.add(TrackingEvent(
+        shipment_id=shipment.id,
+        status="picked_up",
+        location="Sender",
+        description="Label created and parcel collected",
+        occurred_at=datetime.now(timezone.utc),
+    ))
+
+    order.status = "shipped"
+    await db.flush()
+
+    await emit_event(
+        db,
+        EventType.ORDER_SHIPPED,
+        "order",
+        order.id,
+        {
+            "order_number": order.number,
+            "tracking_number": label["tracking_number"],
+            "carrier": carrier,
+            "estimated_delivery": label["estimated_delivery"].isoformat(),
+        },
+    )
+
+    await db.commit()
+    return {
+        "shipment_id": str(shipment.id),
+        "tracking_number": label["tracking_number"],
+        "carrier": carrier,
+        "status": "picked_up",
+        "estimated_delivery": label["estimated_delivery"].isoformat(),
+        "label_url": label["label_url"],
+    }
+
+
+@router.post("/shipments/{shipment_id}/advance")
+async def advance_shipment(
+    shipment_id: str,
+    payload: dict = {},
+    staff: StaffUser = Depends(require_staff),
+    db: AsyncSession = Depends(get_db),
+):
+    """Advance shipment to next tracking state (for testing)."""
+    result = await db.execute(select(Shipment).where(Shipment.id == shipment_id))
+    shipment = result.scalars().first()
+    if not shipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found")
+
+    force_fail = payload.get("force_fail", False)
+    event_data = advance_tracking(shipment.current_status if hasattr(shipment, 'current_status') else shipment.status, force_fail=force_fail)
+
+    if not event_data["advanced"]:
+        return {"message": "Already in terminal state", "status": shipment.status}
+
+    shipment.status = event_data["status"]
+
+    db.add(TrackingEvent(
+        shipment_id=shipment.id,
+        status=event_data["status"],
+        location=event_data["location"],
+        description=event_data["description"],
+        occurred_at=event_data["occurred_at"],
+    ))
+
+    if event_data["status"] == "delivered":
+        shipment.delivered_at = event_data["occurred_at"]
+        result2 = await db.execute(select(Order).where(Order.id == shipment.order_id))
+        order = result2.scalars().first()
+        if order:
+            order.status = "delivered"
+            await db.flush()
+            await emit_event(
+                db,
+                EventType.ORDER_DELIVERED,
+                "order",
+                order.id,
+                {"order_number": order.number, "tracking_number": shipment.tracking_number},
+            )
+
+    await db.commit()
+    return {
+        "shipment_id": str(shipment.id),
+        "status": event_data["status"],
+        "location": event_data["location"],
+        "description": event_data["description"],
+    }
 
 
 # ============================================================================

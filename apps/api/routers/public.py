@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
 from apps.api.dependencies import get_db
-from apps.api.models import Product, Category, Review, StockLevel
+from apps.api.models import Product, Category, Review, StockLevel, Shipment, TrackingEvent
 from apps.api.schemas import ProductResponse, ProductSearchResponse, CategoryResponse, ReviewResponse
 
 router = APIRouter(prefix="/api/public", tags=["public"])
@@ -132,5 +132,41 @@ async def check_stock(product_id: str, db: AsyncSession = Depends(get_db)):
                 "reserved": s.reserved_quantity,
             }
             for s in stocks
+        ],
+    }
+
+
+@router.get("/tracking/{tracking_number}")
+async def track_shipment(tracking_number: str, db: AsyncSession = Depends(get_db)):
+    """Public shipment tracking by tracking number."""
+    result = await db.execute(
+        select(Shipment).where(Shipment.tracking_number == tracking_number)
+    )
+    shipment = result.scalars().first()
+    if not shipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tracking number not found")
+
+    events_result = await db.execute(
+        select(TrackingEvent)
+        .where(TrackingEvent.shipment_id == shipment.id)
+        .order_by(TrackingEvent.occurred_at.desc())
+    )
+    events = events_result.scalars().all()
+
+    return {
+        "tracking_number": shipment.tracking_number,
+        "carrier": shipment.carrier,
+        "status": shipment.status,
+        "estimated_delivery": shipment.estimated_delivery.isoformat() if shipment.estimated_delivery else None,
+        "shipped_at": shipment.shipped_at.isoformat() if shipment.shipped_at else None,
+        "delivered_at": shipment.delivered_at.isoformat() if shipment.delivered_at else None,
+        "events": [
+            {
+                "status": e.status,
+                "location": e.location,
+                "description": e.description,
+                "occurred_at": e.occurred_at.isoformat(),
+            }
+            for e in events
         ],
     }
