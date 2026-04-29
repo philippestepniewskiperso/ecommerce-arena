@@ -5,7 +5,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apps.api.routers import public, customer, admin, events
+from apps.api.routers import public, customer, admin, events, chat
 
 app = FastAPI(
     title="ecommerce-arena",
@@ -27,6 +27,7 @@ app.include_router(public.router)
 app.include_router(customer.router)
 app.include_router(admin.router)
 app.include_router(events.router)
+app.include_router(chat.router)
 
 
 @app.get("/health")
