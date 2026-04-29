@@ -405,7 +405,7 @@ async def advance_shipment(
 # SUPPORT TICKETS
 # ============================================================================
 
-@router.get("/support/tickets", response_model=list[SupportTicketResponse])
+@router.get("/support/tickets")
 async def list_support_tickets(
     status: str | None = None,
     skip: int = Query(0, ge=0),
@@ -419,7 +419,23 @@ async def list_support_tickets(
         query = query.where(SupportTicket.status == status)
     query = query.order_by(SupportTicket.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    tickets = result.scalars().all()
+    return [
+        {
+            "id": str(t.id),
+            "number": t.number,
+            "subject": t.subject,
+            "status": t.status,
+            "priority": t.priority,
+            "customer_id": str(t.customer_id),
+            "order_id": str(t.order_id) if t.order_id else None,
+            "assigned_to_id": str(t.assigned_to_id) if t.assigned_to_id else None,
+            "created_at": t.created_at.isoformat(),
+            "updated_at": t.updated_at.isoformat(),
+            "resolved_at": t.resolved_at.isoformat() if t.resolved_at else None,
+        }
+        for t in tickets
+    ]
 
 
 @router.patch("/support/tickets/{ticket_id}/assign")
