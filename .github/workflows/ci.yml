@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint & typecheck ────────────────────────────────────────────────────────
+  lint:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: uv run ruff check .
+
+  # ── Python unit & integration tests ─────────────────────────────────────────
+  pytest:
+    name: Python tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+
+      - run: uv sync --frozen
+
+      - name: Create test database
+        run: PGPASSWORD=postgres psql -h localhost -p 5433 -U postgres -c "CREATE DATABASE ecommerce_test;"
+
+      - name: Apply migrations
+        run: |
+          cp .env.example .env
+          uv run alembic upgrade head
+
+      - run: uv run pytest tests/ -v --tb=short
+
+  # ── Playwright e2e ──────────────────────────────────────────────────────────
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen
+
+      - name: Set up environment
+        run: cp .env.example .env
+
+      - name: Migrate & seed
+        run: |
+          uv run alembic upgrade head
+          uv run python scripts/seed/seed_dev.py
+
+      - name: Build Next.js apps
+        run: pnpm build --filter=storefront --filter=backoffice
+
+      - name: Start API
+        run: uv run uvicorn apps.api.main:app --host 0.0.0.0 --port 3002 &
+
+      - name: Start Next.js apps
+        run: |
+          pnpm --filter=storefront start &
+          pnpm --filter=backoffice start &
+
+      - name: Wait for services
+        run: |
+          npx --yes wait-on \
+            http://localhost:3000 \
+            http://localhost:3001 \
+            http://localhost:3002/health \
+            --timeout 90000
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        run: pnpm e2e
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

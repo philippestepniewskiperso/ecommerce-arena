@@ -8,7 +8,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "e2e": "turbo e2e",
+    "e2e": "playwright test",
     "setup": "node scripts/setup.mjs",
     "seed:dev": "uv run python scripts/seed/seed_dev.py",
     "seed:full": "uv run python scripts/seed/seed_full.py",
@@ -18,6 +18,7 @@
     "import:images": "node scripts/import-images.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
   }
