@@ -1,5 +1,7 @@
 # E-Commerce Sandbox
 
+![CI](https://github.com/philippe-stepniewski/ecommerce-sandbox/actions/workflows/ci.yml/badge.svg)
+
 Vanilla e-commerce platform designed as a realistic sandbox for agentic use cases. No AI layer — all services run locally.
 
 ## Quick start (Docker only)
@@ -38,8 +40,8 @@ pnpm reset           # truncate all tables + re-seed:dev
 pnpm db:migrate      # apply pending Alembic migrations
 pnpm lint
 pnpm typecheck
-pnpm test
-pnpm e2e
+pnpm test            # pytest (Python) + Vitest (TS)
+pnpm e2e             # Playwright — requires full stack running
 ```
 
 ## Demo accounts
@@ -50,6 +52,16 @@ pnpm e2e
 | ops@demo.local | demo1234 | ops_manager |
 | cs@demo.local | demo1234 | cs_agent |
 
+## Features
+
+- **Catalogue** — products, variants, stock levels, full-text search (Postgres tsvector)
+- **Checkout** — cart, orders, mock payment, mock carrier with label + tracking
+- **Customer account** — order history, support tickets
+- **Live chat** — WebSocket-based customer ↔ staff chat; widget on storefront, panel in back-office
+- **Back-office** — PIM, OMS, CRM, support queue, staff RBAC
+- **Event bus** — `domain_event` table + SSE stream + outbound webhooks (HMAC-signed) for agents
+- **Auth** — customer sessions, staff RBAC (5 roles), API keys for M2M agents
+
 ## Architecture
 
 ```
@@ -58,8 +70,9 @@ apps/backoffice/   Next.js 14 — staff dashboard (port 3001)
 apps/api/          FastAPI + Uvicorn — all business logic (port 3002)
 packages/ui/       Shared React components
 scripts/seed/      seed_dev.py + seed_full.py
-scripts/etl/       Postgres → DuckDB
 migrations/        Alembic
+e2e/               Playwright tests
+tests/             Python pytest (API integration tests)
 ```
 
 API docs: http://localhost:3002/api/docs
