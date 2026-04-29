@@ -34,6 +34,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [staffOnline, setStaffOnline] = useState(false);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'open' | 'closed' | 'error'>('closed');
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -63,9 +64,9 @@ export default function ChatWidget() {
     setAuthLoading(true);
     setAuthError('');
     try {
-      await loginOrSignup(authForm.email, authForm.password, authForm.first_name || 'Guest', authForm.last_name || 'User');
+      const loggedIn = await loginOrSignup(authForm.email, authForm.password, authForm.first_name || 'Guest', authForm.last_name || 'User');
       setView('list');
-      loadTickets();
+      loadTickets(loggedIn.token);  // use returned token, not stale state
     } catch (err: unknown) {
       setAuthError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
@@ -74,12 +75,13 @@ export default function ChatWidget() {
   }
 
   // Ticket list
-  async function loadTickets() {
-    if (!user) return;
+  async function loadTickets(token?: string) {
+    const authToken = token ?? user?.token;
+    if (!authToken) return;
     setTicketsLoading(true);
     try {
       const res = await fetch(`${API}/api/customer/support/tickets`, {
-        headers: { Authorization: `Bearer ${user.token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       setTickets(await res.json());
     } finally {
@@ -127,21 +129,27 @@ export default function ChatWidget() {
   // WebSocket
   const connectWs = useCallback((ticketId: string, token: string) => {
     disconnectWs();
+    setWsStatus('connecting');
     const ws = new WebSocket(`${WS_URL}/ws/chat/${ticketId}?token=${token}`);
     wsRef.current = ws;
 
+    ws.onopen = () => { if (wsRef.current === ws) setWsStatus('open'); };
+
     ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data);
-      if (msg.type === 'message') {
-        setMessages(prev => [...prev, msg]);
-      } else if (msg.type === 'joined' && msg.sender_type === 'staff') {
-        setStaffOnline(true);
-      } else if (msg.type === 'left' && msg.sender_type === 'staff') {
-        setStaffOnline(false);
-      }
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'message') {
+          setMessages(prev => [...prev, msg]);
+        } else if (msg.type === 'joined' && msg.sender_type === 'staff') {
+          setStaffOnline(true);
+        } else if (msg.type === 'left' && msg.sender_type === 'staff') {
+          setStaffOnline(false);
+        }
+      } catch {}
     };
 
-    ws.onclose = () => setStaffOnline(false);
+    ws.onerror = () => { if (wsRef.current === ws) setWsStatus('error'); };
+    ws.onclose = () => { if (wsRef.current === ws) { setStaffOnline(false); setWsStatus('closed'); } };
   }, []);
 
   function disconnectWs() {
@@ -181,11 +189,17 @@ export default function ChatWidget() {
           <p className="text-sm font-bold">KICKS Support</p>
           {view === 'chat' && (
             <p className="text-xs text-gray-400">
-              {staffOnline ? '● Agent online' : '○ Waiting for agent…'}
+              {wsStatus === 'connecting' ? '○ Connecting…'
+                : wsStatus === 'error' ? '⚠ Connection error'
+                : wsStatus === 'closed' ? '○ Disconnected'
+                : staffOnline ? '● Agent online' : '● Connected — waiting for agent…'}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
+          {view === 'chat' && (wsStatus === 'error' || wsStatus === 'closed') && activeTicket && user && (
+            <button onClick={() => connectWs(activeTicket.id, user.token)} className="text-gray-400 hover:text-white text-xs" title="Reconnect">↺</button>
+          )}
           {view === 'chat' && (
             <button onClick={() => { disconnectWs(); setView('list'); loadTickets(); }} className="text-gray-400 hover:text-white text-xs">←</button>
           )}

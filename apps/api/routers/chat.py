@@ -311,7 +311,7 @@ async def chat_ws(
         manager.disconnect(ticket_id, websocket)
         await manager.broadcast(ticket_id, {
             "type": "left",
-            "author_type": principal_type,
+            "sender_type": principal_type,
             "sender_name": display_name,
             "ticket_id": ticket_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
