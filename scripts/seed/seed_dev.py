@@ -4,6 +4,7 @@ Dev seed: staff accounts, 50 customers, 20 products w/ variants + stock,
 Run: uv run python scripts/seed/seed_dev.py
 """
 import asyncio
+import os
 import random
 import sys
 import uuid
@@ -38,7 +39,7 @@ from apps.api.models import (
     TicketMessage,
 )
 
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce")
 
 rng = random.Random(42)
 

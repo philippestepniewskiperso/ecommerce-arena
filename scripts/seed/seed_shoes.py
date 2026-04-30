@@ -1,5 +1,6 @@
 """Seed shoe products and categories for KICKS storefront."""
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,7 @@ import uuid
 
 from apps.api.models import Category, Product
 
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce")
 
 async def seed_shoes():
     engine = create_async_engine(DATABASE_URL, echo=False)

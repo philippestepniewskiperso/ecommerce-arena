@@ -1,0 +1,13 @@
+node_modules
+.next
+__pycache__
+.venv
+.env
+*.pyc
+*.pyo
+.ruff_cache
+test-results
+playwright-report
+data
+.claude
+ecommerce-simulator-plan.md

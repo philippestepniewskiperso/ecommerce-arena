@@ -6,7 +6,7 @@ function run(cmd, label) {
 }
 
 try {
-  run("docker compose up -d --wait", "Starting infrastructure (Postgres, MinIO, MailHog)");
+  run("docker compose up -d postgres mailpit minio --wait", "Starting infrastructure (Postgres, Mailpit, MinIO)");
   run("uv sync", "Installing Python dependencies");
   run("uv run alembic upgrade head", "Running database migrations");
   run("uv run python scripts/seed/seed_dev.py", "Seeding development data");
