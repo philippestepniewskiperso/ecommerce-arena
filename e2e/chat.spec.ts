@@ -121,11 +121,13 @@ test.describe('Live chat exchange', () => {
       await customerPage.getByPlaceholder(/type a message/i).press('Enter');
       await expect(customerPage.getByText('Hello from customer')).toBeVisible();
 
-      // ── Staff: login → support → open ticket ────────────────────────────────
-      await staffPage.goto(`${BACKOFFICE}/login`);
-      await staffPage.getByPlaceholder('admin@demo.local').fill('cs@demo.local');
-      await staffPage.locator('input[type="password"]').fill('demo1234');
-      await staffPage.getByRole('button', { name: /sign in/i }).click();
+      // ── Staff: login via API → inject token → navigate ──────────────────────
+      const loginRes = await staffPage.request.post('http://localhost:3002/api/admin/auth/login', {
+        data: { email: 'cs@demo.local', password: 'demo1234' },
+      });
+      const { token: staffToken } = await loginRes.json();
+      await staffPage.goto(`${BACKOFFICE}`);
+      await staffPage.evaluate((t) => localStorage.setItem('staff_token', t), staffToken);
 
       await staffPage.goto(`${BACKOFFICE}/support`);
       await expect(staffPage.getByText(subject)).toBeVisible({ timeout: 5_000 });
