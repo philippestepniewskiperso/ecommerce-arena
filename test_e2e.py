@@ -2,15 +2,12 @@
 """End-to-end test: signup → product search → order → events."""
 import asyncio
 import httpx
-import json
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select
 import sys
 
 # Import models and schemas
-from apps.api.models import Customer, Product, Category, Order, OrderItem, DomainEvent
-from apps.api.schemas import ProductCreate, OrderCreate, OrderItemBase
-from apps.api.auth import hash_password
+from apps.api.models import Product, Category, DomainEvent
 
 BASE_URL = "http://localhost:3002"
 DB_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce"

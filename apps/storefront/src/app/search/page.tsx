@@ -58,7 +58,7 @@ export default function SearchPage({
         {loading && <p className="text-gray-600">Searching...</p>}
 
         {!loading && query && products.length === 0 && (
-          <p className="text-gray-600">No products found for "{query}"</p>
+          <p className="text-gray-600">No products found for &quot;{query}&quot;</p>
         )}
 
         {products.length > 0 && (

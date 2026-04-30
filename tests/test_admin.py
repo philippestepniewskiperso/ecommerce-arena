@@ -1,5 +1,4 @@
 """Admin API: staff auth, orders, shipping, support."""
-import pytest
 
 
 def auth_headers(token):

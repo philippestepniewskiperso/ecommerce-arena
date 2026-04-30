@@ -1,5 +1,4 @@
 """Public API: catalog, search, tracking."""
-import pytest
 
 
 async def test_health(client):

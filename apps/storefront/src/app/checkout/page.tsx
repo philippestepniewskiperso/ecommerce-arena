@@ -146,7 +146,7 @@ export default function CheckoutPage() {
             {step === 'auth' ? (
               <form onSubmit={handleAuth} className="space-y-4">
                 <h2 className="text-xl font-bold text-black mb-4">Your account</h2>
-                <p className="text-sm text-gray-600 mb-6">Log in or we'll create an account for you.</p>
+                <p className="text-sm text-gray-600 mb-6">Log in or we&apos;ll create an account for you.</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>

@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, delete
 import uuid
-from uuid import UUID
 
 from apps.api.models import Category, Product
 

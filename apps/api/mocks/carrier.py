@@ -4,7 +4,6 @@ State machine: pending → picked_up → in_transit → out_for_delivery → del
 Failure path: any state → failed (rare, ~5%)
 """
 import random
-import secrets
 import string
 from datetime import datetime, timedelta, timezone
 

@@ -5,7 +5,7 @@ from sqlalchemy import select, func, and_
 
 from apps.api.dependencies import get_db
 from apps.api.models import Product, Category, Review, StockLevel, Shipment, TrackingEvent
-from apps.api.schemas import ProductResponse, ProductSearchResponse, CategoryResponse, ReviewResponse
+from apps.api.schemas import CategoryResponse, ReviewResponse
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 

@@ -1,5 +1,4 @@
 """Customer auth: signup, login, duplicate email."""
-import pytest
 
 
 async def test_signup(client):

@@ -1,5 +1,4 @@
 """Customer endpoints: auth, orders, account, reviews."""
-import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status

@@ -39,5 +39,13 @@ dev = [
 target-version = "py312"
 line-length = 120
 
+[tool.ruff.lint]
+ignore = ["E712"]
+
+[tool.ruff.lint.per-file-ignores]
+"apps/api/main.py" = ["E402"]
+"apps/api/models/*.py" = ["F821"]
+"test_e2e.py" = ["F841"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

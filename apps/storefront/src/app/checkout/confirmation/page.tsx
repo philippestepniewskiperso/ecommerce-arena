@@ -14,7 +14,7 @@ export default function ConfirmationPage({ searchParams }: Props) {
         <div className="text-6xl mb-6">✓</div>
         <h1 className="text-4xl font-bold text-black mb-3">Order Confirmed</h1>
         <p className="text-gray-600 mb-8">
-          Thank you for your order. We'll send a confirmation email shortly.
+          Thank you for your order. We&apos;ll send a confirmation email shortly.
         </p>
 
         <div className="bg-gray-50 rounded-sm p-6 mb-8 text-left">

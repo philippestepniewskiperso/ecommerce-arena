@@ -3,7 +3,6 @@ Pytest fixtures. Each test gets a fresh DB state via table truncation.
 NullPool prevents asyncpg connections from leaking across event loops.
 """
 import os
-import pytest
 import pytest_asyncio
 
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5433/ecommerce_test"

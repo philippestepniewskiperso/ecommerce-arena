@@ -1,13 +1,11 @@
 import os
 from typing import Annotated
-import uuid
 
-from fastapi import Depends, HTTPException, status, Header, Request
+from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from apps.api.auth.session import get_session
-from apps.api.auth.apikey import verify_api_key
 from apps.api.auth.rbac import has_permission, has_role
 from apps.api.models import Customer, StaffUser, ApiKey
 from apps.api.dependencies import get_db

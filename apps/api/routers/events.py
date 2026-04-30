@@ -9,7 +9,7 @@ import asyncio
 from apps.api.dependencies import get_db
 from apps.api.models import DomainEvent, WebhookSubscription, WebhookDelivery
 from apps.api.schemas import DomainEventResponse, WebhookSubscriptionCreate, WebhookSubscriptionResponse
-from apps.api.auth import require_api_key, require_staff
+from apps.api.auth import require_api_key
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
