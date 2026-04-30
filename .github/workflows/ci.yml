@@ -131,15 +131,15 @@ jobs:
           uv run python scripts/seed/seed_dev.py
 
       - name: Build Next.js apps
-        run: pnpm build --filter=storefront --filter=backoffice
+        run: pnpm build --filter=@ecommerce/storefront --filter=@ecommerce/backoffice
 
       - name: Start API
         run: uv run uvicorn apps.api.main:app --host 0.0.0.0 --port 3002 &
 
       - name: Start Next.js apps
         run: |
-          pnpm --filter=storefront start &
-          pnpm --filter=backoffice start &
+          pnpm --filter=@ecommerce/storefront start &
+          pnpm --filter=@ecommerce/backoffice start &
 
       - name: Wait for services
         run: |
