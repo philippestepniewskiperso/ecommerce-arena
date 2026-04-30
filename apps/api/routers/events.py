@@ -68,13 +68,10 @@ async def register_webhook(
     db: AsyncSession = Depends(get_db),
 ):
     """Register webhook subscription for agent (requires API key)."""
-    import hashlib
-    secret_hash = hashlib.sha256(payload.secret.encode()).hexdigest()
-
     subscription = WebhookSubscription(
         url=payload.url,
         events=payload.events,
-        secret_hash=secret_hash,
+        secret_hash=payload.secret,
         active=True,
     )
     db.add(subscription)
