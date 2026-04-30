@@ -297,7 +297,7 @@ export default function ChatWidget() {
           {/* Messages */}
           <div className="flex-1 overflow-auto p-3 space-y-3">
             {messages.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-4">Waiting for a support agent to join…</p>
+              <p className="text-xs text-gray-400 text-center py-4">No messages yet. Send one to start the conversation.</p>
             )}
             {messages.map((m, i) => {
               const isMe = m.sender_type === 'customer';
@@ -322,7 +322,7 @@ export default function ChatWidget() {
               className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-black"
             />
             <button type="submit"
-              disabled={!draft.trim()}
+              disabled={!draft.trim() || wsStatus !== 'open'}
               className="bg-black text-white rounded px-3 py-1.5 text-sm disabled:opacity-40">
               ↑
             </button>
