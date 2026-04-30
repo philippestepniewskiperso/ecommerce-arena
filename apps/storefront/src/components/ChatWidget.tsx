@@ -83,7 +83,8 @@ export default function ChatWidget() {
       const res = await fetch(`${API}/api/customer/support/tickets`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      setTickets(await res.json());
+      const data = await res.json();
+      setTickets(Array.isArray(data) ? data : []);
     } finally {
       setTicketsLoading(false);
     }
